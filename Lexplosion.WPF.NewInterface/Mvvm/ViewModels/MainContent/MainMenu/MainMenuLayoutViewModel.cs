@@ -90,10 +90,12 @@ namespace Lexplosion.WPF.NewInterface.Mvvm.ViewModels.MainContent.MainMenu
 
         private void InitDefaultLeftPanelTabs()
         {
+            LeftPanel.AddTabItem("Feed", "Feed", null);
             LeftPanel.AddTabItem("Catalog", "Catalog", _catalogViewModel);
             LeftPanel.AddTabItem("Library", "Library", _libraryViewModel);
+
+            //LeftPanel.AddTabItem("Friends", "Friends", _friendsLayoutViewModel, 14, 16);
             LeftPanel.AddTabItem("Multiplayer", "Multiplayer", _multiplayerLayoutViewModel);
-            LeftPanel.AddTabItem("Friends", "Friends", _friendsLayoutViewModel, 18, 20);
             LeftPanel.AddTabItem("Settings", "Settings", _generalSettingsLayoutViewModel);
             LeftPanel.SelectFirst();
         }

@@ -41,11 +41,15 @@
                         <Setter Property="BorderThickness" Value="0" />
                         <Style.Triggers>
                             <!--  nth-child with alternative index  -->
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContentPresenter}}, Path=(ItemsControl.AlternationIndex)}" Value="1">
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContentPresenter}}, Path=(ItemsControl.AlternationIndex)}" Value="0">
                                 <Setter Property="Padding" Value="0,0,0,8" />
                                 <Setter Property="Margin" Value="0,0,0,8" />
                                 <Setter Property="BorderBrush" Value="{DynamicResource LeftPanelItemsSeparateSolidColorBrush}" />
                                 <Setter Property="BorderThickness" Value="0,0,0,1" />
+                            </DataTrigger>
+
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ContentPresenter}}, Converter={valueconverters:IsLastItemConverter}}" Value="True">
+                                <Setter Property="BorderThickness" Value="0,0,0,0" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>

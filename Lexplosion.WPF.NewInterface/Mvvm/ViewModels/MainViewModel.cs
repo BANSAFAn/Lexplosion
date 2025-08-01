@@ -21,6 +21,7 @@ using System.Windows.Input;
 using Lexplosion.Logic.Management.Accounts;
 using System.Diagnostics;
 using Lexplosion.WPF.NewInterface.Mvvm.Views.Windows;
+using Lexplosion.WPF.NewInterface.Mvvm.ViewModels.Profile;
 
 namespace Lexplosion.WPF.NewInterface.Mvvm.ViewModels
 {
@@ -150,7 +151,7 @@ namespace Lexplosion.WPF.NewInterface.Mvvm.ViewModels
                     Model.InstanceSharesController, 
                     _mainMenuLayoutViewModel.OpenAccountFactory));
 
-            ToMainMenu = new NavigateCommand<ViewModelBase>(NavigationStore, () => _mainMenuLayoutViewModel);
+            ToMainMenu = new NavigateCommand<ViewModelBase>(NavigationStore, () => new ProfileViewModel());
 
             InitTrayComponents();
             RuntimeApp.TrayMenuElementClicked += InitTrayComponents;

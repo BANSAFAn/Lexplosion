@@ -120,7 +120,9 @@
     <Compile Include="Core\Converters\ValueConverters\CollectionToStringWithBreaklineConverter.cs" />
     <Compile Include="Core\Converters\ValueConverters\CountToVisibilityConverter.cs" />
     <Compile Include="Core\Converters\ValueConverters\ImagePathValidateConverter.cs" />
+    <Compile Include="Core\Converters\ValueConverters\IntToSolidColorBrushConverter.cs" />
     <Compile Include="Core\Converters\ValueConverters\IsCollectionEmptyConverter.cs" />
+    <Compile Include="Core\Converters\ValueConverters\IsLastItemConverter.cs" />
     <Compile Include="Core\Converters\ValueConverters\RowElementCountConverter.cs" />
     <Compile Include="Core\Converters\ValueConverters\StringCollectionToShortString.cs" />
     <Compile Include="Core\FiltableObservableCollection.cs" />
@@ -174,6 +176,7 @@
     <Compile Include="Mvvm\Models\MainContent\MainMenu\Friends\FriendsModel.cs" />
     <Compile Include="Mvvm\Models\MainContent\MainMenu\GeneralSettings\AccountsSettingsModel.cs" />
     <Compile Include="Mvvm\Models\Modal\InstanceFactory\InstanceFactoryModel.cs" />
+    <Compile Include="Mvvm\Models\Profile\ProfileModel.cs" />
     <Compile Include="Mvvm\OldInstanceForm.xaml.cs">
       <DependentUpon>OldInstanceForm.xaml</DependentUpon>
     </Compile>
@@ -216,6 +219,7 @@
     <Compile Include="Mvvm\ViewModels\Modal\InstanceTransfer\InstanceDistributionViewModel.cs" />
     <Compile Include="Mvvm\ViewModels\Modal\InstanceTransfer\InstanceShareLayoutViewModel.cs" />
     <Compile Include="Mvvm\ViewModels\Modal\InstanceTransfer\InstanceShareViewModel.cs" />
+    <Compile Include="Mvvm\ViewModels\Profile\ProfileViewModel.cs" />
     <Compile Include="Mvvm\ViewModels\WelcomePageThemeSelectViewModel.cs" />
     <Compile Include="Mvvm\ViewModels\WelcomeViewModel.cs" />
     <Compile Include="Mvvm\Views\Modal\AddonRepository\SelectAddonVersionView.xaml.cs">
@@ -322,6 +326,9 @@
     </Compile>
     <Compile Include="Mvvm\Views\Pages\PageCurtains\NightWorld\NightWorldPageCurtainsView.xaml.cs">
       <DependentUpon>NightWorldPageCurtainsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Mvvm\Views\Pages\Profile\ProfileView.xaml.cs">
+      <DependentUpon>ProfileView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Mvvm\Views\Pages\WelcomePage\WelcomePageThemeSelectView.xaml.cs">
       <DependentUpon>WelcomePageThemeSelectView.xaml</DependentUpon>
@@ -848,6 +855,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Mvvm\Views\Pages\PageCurtains\NightWorld\NightWorldPageCurtainsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Mvvm\Views\Pages\Profile\ProfileView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -68,6 +68,7 @@ namespace Lexplosion.WPF.NewInterface.Mvvm.Views.Windows
 
             _gallery = appCore.GalleryManager;
             InitGallery();
+            //Scalling();
         }
 
         private void PrepareAnimationForThemeService()

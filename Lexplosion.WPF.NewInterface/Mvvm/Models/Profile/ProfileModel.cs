@@ -1,6 +1,7 @@
 ﻿using Lexplosion.WPF.NewInterface.Core.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows.Documents;
 using System.Windows.Media;
 
@@ -33,6 +34,24 @@ namespace Lexplosion.WPF.NewInterface.Mvvm.Models.Profile
         public uint BorderColor { get; } = 0x66167FFC;
     }
 
+    public struct Post 
+    {
+        public string AuthorName { get; }
+        public ProfileTitle AuthorTitle { get; }
+        public string Text { get; set; }
+        public int ViewsCount { get; }
+        public DateTime CreationDate { get; }
+        public int LikesCount { get; set; }
+    }
+
+    public class PostComment 
+    {
+        public string AuthorName { get; }
+        public string Content { get; }
+        public DateTime CreationDate { get; }
+        public List<PostComment> Answers { get; } = new();
+    }
+
     public class ProfileModel : ObservableObject
     {
         public List<ProfileSocialMedia> SocialMedia { get; } = new();
@@ -45,6 +64,9 @@ namespace Lexplosion.WPF.NewInterface.Mvvm.Models.Profile
 
         public string Summary { get; }
         public ActivityStatus Status { get; }
+
+
+        public ObservableCollection<Post> Posts { get; } = new();
 
         public ProfileModel()
         {

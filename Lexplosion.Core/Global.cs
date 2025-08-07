@@ -30,6 +30,7 @@ namespace Lexplosion.Global
 			public const string LauncherPartsMirror = "https://mirror.night-world.org/assets/launcher/windows/";
 			public const string UserApi = "https://night-world.org/api/user/";
 			public const string Base = "https://night-world.org/";
+			public const string MirrorBase = "https://mirror.night-world.org/";
 			public const string Account = "https://night-world.org/api/account/";
 			public const string MirrorUrl = "https://night-world.org/mirror/";
 		}
@@ -40,7 +41,7 @@ namespace Lexplosion.Global
 
 		public const string secretWord = "iDRCQxDMwGVCjWVe0ZEJ4u9DeG38BNL52x777trQ"; // на самом деле нихуя не сикрет
 		public const string passwordKey = "ZEmMJ0ZaXQXuHu8tUnfdaCLCQaFgRjOP";
-		public const int version = 1751747213;
+		public const int version = 1754491530;
 		public const int CommandServerPort = 54352;
 		public const string DiscordAppID = "839856058703806484";
 		public const string ServerIp = "rtc.night-world.org";

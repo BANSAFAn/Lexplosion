@@ -10,6 +10,9 @@
     <RootNamespace>Lexplosion.WPF.NewInterface</RootNamespace>
     <AssemblyName>Lexplosion</AssemblyName>
     <ApplicationIcon>Assets\images\icons\logo.ico</ApplicationIcon>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
   </PropertyGroup>
   
   
@@ -1233,6 +1236,6 @@
   </ItemGroup>
   
   <PropertyGroup>
-    <PreBuildEvent>copy "$(SolutionDir)DLL\Lexplosion.Core.zip" "$(ProjectDir)\Resources\Libraries\Lexplosion.Core.zip"</PreBuildEvent>
+    <PreBuildEvent>copy "$(SolutionDir)DLL\Lexplosion.Core.zip" "$(ProjectDir)Resources\Libraries\Lexplosion.Core.zip"</PreBuildEvent>
   </PropertyGroup>
 </Project>

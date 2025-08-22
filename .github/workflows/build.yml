@@ -1,0 +1,33 @@
+name: CI Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'  # Adjust to your .NET version
+
+    - name: Restore dependencies
+      run: dotnet restore Lexplosion.sln
+
+    - name: Build
+      run: dotnet build Lexplosion.sln --no-restore
+
+    - name: Test
+      run: dotnet test Lexplosion.sln --no-build --verbosity normal

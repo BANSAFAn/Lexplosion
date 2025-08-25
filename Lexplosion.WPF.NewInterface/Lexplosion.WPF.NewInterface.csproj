@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-  
+<Project Sdk="Microsoft.NET.Sdk" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <RootNamespace>Lexplosion.WPF.NewInterface</RootNamespace>
@@ -13,6 +14,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <StartupObject>Lexplosion.WPF.NewInterface.RuntimeApp</StartupObject>
   </PropertyGroup>
   
   
@@ -27,12 +29,20 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.6" />
     <PackageReference Include="VirtualizingWrapPanel" Version="2.2.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="System.IO.Compression" />
+  </ItemGroup>
+  
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Main.cs" />
     <Compile Include="Controls\AdvancedComboBox\AdvancedComboBox.cs" />
     <Compile Include="Controls\AdvancedToggleButton\AdvancedToggleButton.cs" />
     <Compile Include="Controls\AdvancedWrapPanel\AdvancedWrapPanel.cs" />
@@ -1235,7 +1245,5 @@
     <Content Include="Resources\Libraries\Compression.dll" />
   </ItemGroup>
   
-  <PropertyGroup>
-    <PreBuildEvent>copy "$(SolutionDir)DLL\Lexplosion.Core.zip" "$(ProjectDir)Resources\Libraries\Lexplosion.Core.zip"</PreBuildEvent>
-  </PropertyGroup>
+  
 </Project>

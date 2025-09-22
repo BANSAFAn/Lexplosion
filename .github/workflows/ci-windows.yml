@@ -19,25 +19,47 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
+      - name: Locate MSBuild via vswhere
+        shell: pwsh
+        run: |
+          $vswhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            Write-Error "vswhere.exe not found at $vswhere"
+            exit 1
+          }
+          $msbuildPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find **\MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+          if (-not $msbuildPath) {
+            Write-Error "MSBuild.exe not found by vswhere"
+            exit 1
+          }
+          Write-Host "Found MSBuild: $msbuildPath"
+          echo "MSBUILD_PATH=$msbuildPath" >> $env:GITHUB_ENV
+
       - name: Build with MSBuild (Recurse .sln or .csproj)
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:MSBUILD_PATH) {
+            Write-Error "MSBUILD_PATH is not set"
+            exit 1
+          }
           $sln = Get-ChildItem -Recurse -Filter *.sln -ErrorAction SilentlyContinue
           if ($sln) {
             foreach ($f in $sln) {
               Write-Host "Building solution: $($f.FullName)"
-              msbuild $f.FullName /m /p:Configuration=Release
+              & $env:MSBUILD_PATH $f.FullName /m /p:Configuration=Release
             }
           } else {
             Write-Host "No .sln found Ч building all .csproj"
             Get-ChildItem -Recurse -Filter *.csproj | ForEach-Object {
               Write-Host "Building project: $($_.FullName)"
-              msbuild $_.FullName /m /p:Configuration=Release
+              & $env:MSBUILD_PATH $_.FullName /m /p:Configuration=Release
             }
           }
 
       - name: Run tests (если есть .NET tests)
         if: always()
+        shell: pwsh
         run: |
           if (Test-Path "src/Lexplosion.Tests/Lexplosion.Tests.csproj") {
             dotnet test src/Lexplosion.Tests/Lexplosion.Tests.csproj --configuration Release --no-build

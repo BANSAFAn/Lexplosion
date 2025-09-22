@@ -62,11 +62,21 @@ jobs:
             echo "Publishing $p -> publish/linux/$name"
             dotnet publish "$p" -c Release -r linux-x64 --self-contained false -o "publish/linux/$name"
           done
+      - name: Pack Linux artifact if exists
+        run: |
+          set -e
+          if [ -d publish/linux ] && [ "$(ls -A publish/linux)" ]; then
+            cd publish
+            zip -r lexplosion-linux.zip linux || true
+            ls -la lexplosion-linux.zip || true
+          else
+            echo "No publish/linux contents — skipping pack"
+          fi
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: lexplosion-linux
-          path: publish/linux/**
+          path: publish/lexplosion-linux.zip
 
   publish-macos:
     name: Publish macOS
@@ -91,11 +101,21 @@ jobs:
             echo "Publishing $p -> publish/macos/$name"
             dotnet publish "$p" -c Release -r osx-x64 --self-contained false -o "publish/macos/$name"
           done
+      - name: Pack macOS artifact if exists
+        run: |
+          set -e
+          if [ -d publish/macos ] && [ "$(ls -A publish/macos)" ]; then
+            cd publish
+            zip -r lexplosion-macos.zip macos || true
+            ls -la lexplosion-macos.zip || true
+          else
+            echo "No publish/macos contents — skipping pack"
+          fi
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: lexplosion-macos
-          path: publish/macos/**
+          path: publish/lexplosion-macos.zip
 
   create_release:
     name: Create GitHub Release and attach artifacts
@@ -109,6 +129,7 @@ jobs:
       - name: List downloaded
         run: |
           ls -la downloaded || true
+          find downloaded -maxdepth 3 -type f -print || true
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
@@ -120,24 +141,21 @@ jobs:
           body: Auto-release from CI for commit ${{ github.sha }}
           draft: false
           prerelease: false
-      - name: Upload artifacts to release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./downloaded/publish/lexplosion-windows.zip
-          asset_name: lexplosion-windows.zip
-          asset_content_type: application/zip
-      - name: Upload Linux assets
-        if: always()
-        run: |
-          set -e
-          for f in downloaded/publish/linux/*/*; do echo "Uploading $f"; gh release upload "${{ steps.create_release.outputs.tag_name }}" "$f" --clobber || true; done
+      - name: Upload all artifacts to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload macOS assets
-        if: always()
+          UPLOAD_URL: ${{ steps.create_release.outputs.upload_url }}
         run: |
           set -e
-          for f in downloaded/publish/macos/*/*; do echo "Uploading $f"; gh release upload "${{ steps.create_release.outputs.tag_name }}" "$f" --clobber || true; done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Upload url: $UPLOAD_URL"
+          # find all files under downloaded and upload to release
+          for f in $(find downloaded -type f -maxdepth 5); do
+            echo "Uploading $f"
+            filename=$(basename "$f")
+            content_type="application/octet-stream"
+            if [[ "$filename" == *.zip ]]; then content_type="application/zip"; fi
+            curl -s -X POST "${UPLOAD_URL}?name=${filename}" \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: $content_type" \
+              --data-binary @"$f" || echo "Upload failed for $f"
+          done

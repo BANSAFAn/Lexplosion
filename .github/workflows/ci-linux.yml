@@ -57,11 +57,22 @@ jobs:
             dotnet publish "$p" -c Release -r linux-x64 --self-contained false -o "publish/linux/$name"
           done
 
-      - name: Pack and upload Linux artifact
+      - name: Pack Linux artifact if exists
+        run: |
+          set -e
+          if [ -d publish/linux ] && [ "$(ls -A publish/linux)" ]; then
+            cd publish
+            zip -r lexplosion-linux.zip linux || true
+            ls -la lexplosion-linux.zip || true
+          else
+            echo "No publish/linux contents — skipping pack"
+          fi
+
+      - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: lexplosion-linux
-          path: publish/linux/**
+          path: publish/lexplosion-linux.zip
 
       - name: Run tests if test project exists and is compatible
         run: |

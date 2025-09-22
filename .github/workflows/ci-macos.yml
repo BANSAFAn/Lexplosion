@@ -57,11 +57,22 @@ jobs:
             dotnet publish "$p" -c Release -r osx-x64 --self-contained false -o "publish/macos/$name"
           done
 
+      - name: Pack macOS artifact if exists
+        run: |
+          set -e
+          if [ -d publish/macos ] && [ "$(ls -A publish/macos)" ]; then
+            cd publish
+            zip -r lexplosion-macos.zip macos || true
+            ls -la lexplosion-macos.zip || true
+          else
+            echo "No publish/macos contents — skipping pack"
+          fi
+
       - name: Pack and upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: lexplosion-macos
-          path: publish/macos/**
+          path: publish/lexplosion-macos.zip
 
       - name: Run tests if test project exists and is compatible
         run: |

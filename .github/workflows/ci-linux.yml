@@ -1,0 +1,47 @@
+name: CI — Linux build (dotnet SDK projects)
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Build (Linux, dotnet SDK projects)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 6 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore and build SDK-style projects
+        run: |
+          set -e
+          echo "Finding SDK-style projects (look for '<Project Sdk' in .csproj)..."
+          sdk_projects=$(grep -l "<Project .*Sdk=" -R --include="*.csproj" || true)
+          if [ -z "$sdk_projects" ]; then
+            echo "No SDK-style projects found."
+            exit 0
+          fi
+          echo "SDK projects found:"
+          echo "$sdk_projects"
+          for p in $sdk_projects; do
+            echo "dotnet restore $p"
+            dotnet restore "$p"
+            echo "dotnet build $p"
+            dotnet build "$p" --configuration Release
+          done
+
+      - name: Run tests if test project exists
+        run: |
+          set -e
+          if [ -f src/Lexplosion.Tests/Lexplosion.Tests.csproj ]; then
+            dotnet test src/Lexplosion.Tests/Lexplosion.Tests.csproj --configuration Release
+          else
+            echo "No test project found"
+          fi

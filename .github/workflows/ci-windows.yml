@@ -93,11 +93,10 @@ jobs:
           $expectedBase = 'C:\\Program Files\\Java\\jdk-17.0.1'
           $expectedBin = Join-Path $expectedBase 'bin'
           if (-not (Test-Path $expectedBin)) { New-Item -ItemType Directory -Force -Path $expectedBin | Out-Null }
-          # Copy installed java executables if available
+          # Copy installed java executables if available to Program Files path
           if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\java.exe'))) {
             Copy-Item -Path (Join-Path $env:JAVA_HOME 'bin\java.exe') -Destination (Join-Path $expectedBin 'java.exe') -Force -ErrorAction SilentlyContinue
           } else {
-            # create dummy files so File.Exists returns true
             New-Item -Path (Join-Path $expectedBin 'java.exe') -ItemType File -Force | Out-Null
           }
           if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\javaw.exe'))) {
@@ -106,10 +105,29 @@ jobs:
             New-Item -Path (Join-Path $expectedBin 'javaw.exe') -ItemType File -Force | Out-Null
           }
 
-          # Create N: PSDrive pointing to repository working directory and create folder expected by tests (without java exe to simulate missing exe case)
+          # Create N: PSDrive pointing to repository working directory
           try { Remove-PSDrive -Name N -Force -ErrorAction SilentlyContinue } catch {}
           New-PSDrive -Name N -PSProvider FileSystem -Root $PWD -ErrorAction SilentlyContinue | Out-Null
-          New-Item -ItemType Directory -Force -Path "N:\\Lexplosion\\Lexplosion.WPF.NewInterface\\bin\\Debug\\" | Out-Null
+
+          # Create directory variants that tests may expect (but leave without java exe to simulate missing exe)
+          $pathsToCreate = @(
+            'N:\\Lexplosion\\Lexplosion.WPF.NewInterface\\bin\\Debug\\',
+            'N:\\Lexplosion.WPF.NewInterface\\bin\\Debug\\',
+            'N:\\src\\Lexplosion\\Lexplosion.WPF.NewInterface\\bin\\Debug\\',
+            'N:\\src\\Lexplosion.WPF.NewInterface\\bin\\Debug\\'
+          )
+
+          foreach ($p in $pathsToCreate) {
+            if (-not (Test-Path $p)) {
+              New-Item -ItemType Directory -Force -Path $p | Out-Null
+              Write-Host "Created test directory: $p"
+            } else {
+              Write-Host "Test directory already exists: $p"
+            }
+            # ensure no java executables inside these directories (remove if accidentally present)
+            Remove-Item -Path (Join-Path $p 'java.exe') -Force -ErrorAction SilentlyContinue
+            Remove-Item -Path (Join-Path $p 'javaw.exe') -Force -ErrorAction SilentlyContinue
+          }
 
       - name: Run tests (если есть .NET tests)
         if: always()

@@ -23,37 +23,57 @@ jobs:
         shell: pwsh
         run: |
           $vswhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-          if (-not (Test-Path $vswhere)) {
-            Write-Error "vswhere.exe not found at $vswhere"
-            exit 1
-          }
+          if (-not (Test-Path $vswhere)) { Write-Error "vswhere.exe not found at $vswhere"; exit 1 }
           $msbuildPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find **\MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
-          if (-not $msbuildPath) {
-            Write-Error "MSBuild.exe not found by vswhere"
-            exit 1
-          }
+          if (-not $msbuildPath) { Write-Error "MSBuild.exe not found by vswhere"; exit 1 }
           Write-Host "Found MSBuild: $msbuildPath"
           echo "MSBUILD_PATH=$msbuildPath" >> $env:GITHUB_ENV
 
-      - name: Build with MSBuild (Recurse .sln or .csproj)
+      - name: Restore packages (NuGet + dotnet)
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not $env:MSBUILD_PATH) {
-            Write-Error "MSBUILD_PATH is not set"
-            exit 1
-          }
-          $sln = Get-ChildItem -Recurse -Filter *.sln -ErrorAction SilentlyContinue
+          $sln = Get-ChildItem -Recurse -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($sln) {
-            foreach ($f in $sln) {
-              Write-Host "Building solution: $($f.FullName)"
-              & $env:MSBUILD_PATH $f.FullName /m /p:Configuration=Release
+            Write-Host "NuGet restoring solution: $($sln.FullName)"
+            nuget restore $sln.FullName
+            Write-Host "dotnet restore solution: $($sln.FullName)"
+            dotnet restore $sln.FullName
+          } else {
+            Write-Host "No .sln found — running dotnet restore for all csproj"
+            Get-ChildItem -Recurse -Filter *.csproj | ForEach-Object {
+              Write-Host "dotnet restore $($_.FullName)"
+              dotnet restore $_.FullName
             }
+          }
+
+      - name: Build Lexplosion.Core first (to create DLL/Lexplosion.Core.zip)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:MSBUILD_PATH) { Write-Error "MSBUILD_PATH is not set"; exit 1 }
+          $coreProj = Join-Path $PWD "src\Lexplosion.Core\Lexplosion.Core.csproj"
+          if (Test-Path $coreProj) {
+            Write-Host "Building core project: $coreProj"
+            & $env:MSBUILD_PATH $coreProj /t:Rebuild /p:Configuration=Release
+          } else {
+            Write-Host "Core project not found at $coreProj — skipping explicit core build"
+          }
+
+      - name: Build solution (single-threaded to avoid PreBuild race)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:MSBUILD_PATH) { Write-Error "MSBUILD_PATH is not set"; exit 1 }
+          $sln = Get-ChildItem -Recurse -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($sln) {
+            Write-Host "Building solution: $($sln.FullName)"
+            & $env:MSBUILD_PATH $sln.FullName /m:1 /p:Configuration=Release
           } else {
             Write-Host "No .sln found — building all .csproj"
             Get-ChildItem -Recurse -Filter *.csproj | ForEach-Object {
               Write-Host "Building project: $($_.FullName)"
-              & $env:MSBUILD_PATH $_.FullName /m /p:Configuration=Release
+              & $env:MSBUILD_PATH $_.FullName /t:Rebuild /p:Configuration=Release
             }
           }
 
@@ -66,3 +86,10 @@ jobs:
           } else {
             Write-Host "No test project found at src/Lexplosion.Tests/Lexplosion.Tests.csproj"
           }
+
+      - name: Upload build artifacts (DLL/)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-dll
+          path: src/DLL/**

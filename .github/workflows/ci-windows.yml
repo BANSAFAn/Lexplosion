@@ -1,0 +1,46 @@
+name: CI Ч Windows build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 6 SDK (дл€ тестов)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Build with MSBuild (Recurse .sln or .csproj)
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Recurse -Filter *.sln -ErrorAction SilentlyContinue
+          if ($sln) {
+            foreach ($f in $sln) {
+              Write-Host "Building solution: $($f.FullName)"
+              msbuild $f.FullName /m /p:Configuration=Release
+            }
+          } else {
+            Write-Host "No .sln found Ч building all .csproj"
+            Get-ChildItem -Recurse -Filter *.csproj | ForEach-Object {
+              Write-Host "Building project: $($_.FullName)"
+              msbuild $_.FullName /m /p:Configuration=Release
+            }
+          }
+
+      - name: Run tests (если есть .NET tests)
+        if: always()
+        run: |
+          if (Test-Path "src/Lexplosion.Tests/Lexplosion.Tests.csproj") {
+            dotnet test src/Lexplosion.Tests/Lexplosion.Tests.csproj --configuration Release --no-build
+          } else {
+            Write-Host "No test project found at src/Lexplosion.Tests/Lexplosion.Tests.csproj"
+          }

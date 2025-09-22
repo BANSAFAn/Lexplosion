@@ -1,0 +1,143 @@
+name: Release on push
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  publish-windows:
+    name: Publish Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+      - name: Publish SDK-style projects for win-x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          mkdir -Force publish\windows
+          $sdk_projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { Select-String -Path $_.FullName -Pattern '<Project .*Sdk=' -Quiet }
+          foreach ($p in $sdk_projects) {
+            if (Select-String -Path $p.FullName -Pattern 'ProjectReference.*Lexplosion.Core' -Quiet -ErrorAction SilentlyContinue) {
+              Write-Host "Skipping publish for $($p.FullName) — references legacy projects"
+              continue
+            }
+            $name = [System.IO.Path]::GetFileNameWithoutExtension($p.FullName)
+            Write-Host "dotnet publish $($p.FullName) -> publish/windows/$name"
+            dotnet publish $p.FullName -c Release -r win-x64 --self-contained false -o "publish/windows/$name"
+          }
+      - name: Zip Windows
+        shell: pwsh
+        run: |
+          if (Test-Path publish\windows) { Compress-Archive -Path publish\windows\* -DestinationPath publish\lexplosion-windows.zip -Force }
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexplosion-windows
+          path: publish/lexplosion-windows.zip
+
+  publish-linux:
+    name: Publish Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+      - name: Publish SDK-style projects for linux-x64
+        run: |
+          set -e
+          sdk_projects=$(grep -l "<Project .*Sdk=" -R --include="*.csproj" || true)
+          mkdir -p publish/linux
+          for p in $sdk_projects; do
+            if grep -q "<ProjectReference.*Lexplosion.Core" "$p" || grep -q "<ProjectReference.*Lexplosion.UI.WPF" "$p"; then
+              echo "Skipping publish for $p — references legacy projects"
+              continue
+            fi
+            name=$(basename "$p" .csproj)
+            echo "Publishing $p -> publish/linux/$name"
+            dotnet publish "$p" -c Release -r linux-x64 --self-contained false -o "publish/linux/$name"
+          done
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexplosion-linux
+          path: publish/linux/**
+
+  publish-macos:
+    name: Publish macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+      - name: Publish SDK-style projects for macos-x64
+        run: |
+          set -e
+          sdk_projects=$(grep -l "<Project .*Sdk=" -R --include="*.csproj" || true)
+          mkdir -p publish/macos
+          for p in $sdk_projects; do
+            if grep -q "<ProjectReference.*Lexplosion.Core" "$p" || grep -q "<ProjectReference.*Lexplosion.UI.WPF" "$p"; then
+              echo "Skipping publish for $p — references legacy projects"
+              continue
+            fi
+            name=$(basename "$p" .csproj)
+            echo "Publishing $p -> publish/macos/$name"
+            dotnet publish "$p" -c Release -r osx-x64 --self-contained false -o "publish/macos/$name"
+          done
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexplosion-macos
+          path: publish/macos/**
+
+  create_release:
+    name: Create GitHub Release and attach artifacts
+    runs-on: ubuntu-latest
+    needs: [publish-windows, publish-linux, publish-macos]
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded
+      - name: List downloaded
+        run: |
+          ls -la downloaded || true
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v-${{ github.run_number }}-${{ github.sha }}
+          release_name: Release ${{ github.run_number }} ${{ github.sha }}
+          body: Auto-release from CI for commit ${{ github.sha }}
+          draft: false
+          prerelease: false
+      - name: Upload artifacts to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./downloaded/publish/lexplosion-windows.zip
+          asset_name: lexplosion-windows.zip
+          asset_content_type: application/zip
+      - name: Upload Linux assets
+        if: always()
+        run: |
+          set -e
+          for f in downloaded/publish/linux/*/*; do echo "Uploading $f"; gh release upload "${{ steps.create_release.outputs.tag_name }}" "$f" --clobber || true; done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload macOS assets
+        if: always()
+        run: |
+          set -e
+          for f in downloaded/publish/macos/*/*; do echo "Uploading $f"; gh release upload "${{ steps.create_release.outputs.tag_name }}" "$f" --clobber || true; done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

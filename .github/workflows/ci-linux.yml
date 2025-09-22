@@ -42,6 +42,27 @@ jobs:
             dotnet build "$p" --configuration Release
           done
 
+      - name: Publish SDK-style projects for linux-x64
+        run: |
+          set -e
+          sdk_projects=$(grep -l "<Project .*Sdk=" -R --include="*.csproj" || true)
+          mkdir -p publish/linux
+          for p in $sdk_projects; do
+            if grep -q "<ProjectReference.*Lexplosion.Core" "$p" || grep -q "<ProjectReference.*Lexplosion.UI.WPF" "$p"; then
+              echo "Skipping publish for $p — references legacy projects"
+              continue
+            fi
+            name=$(basename "$p" .csproj)
+            echo "Publishing $p -> publish/linux/$name"
+            dotnet publish "$p" -c Release -r linux-x64 --self-contained false -o "publish/linux/$name"
+          done
+
+      - name: Pack and upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexplosion-linux
+          path: publish/linux/**
+
       - name: Run tests if test project exists and is compatible
         run: |
           set -e
